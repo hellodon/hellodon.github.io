@@ -20,7 +20,11 @@ css+svg实现&amp;lt;!DOCTYPE html&amp;gt;
 &amp;lt;html&amp;gt;
 &amp;lt;head&amp;gt;
 &amp;lt;meta charset=&amp;quot;utf-8&amp;quot;">
-<meta property="og:updated_time" content="2016-03-22T08:40:19.000Z">
+<meta property="og:image" content="http://hellodon.github.io/2016/03/17/image-blur-effect/1.JPG">
+<meta property="og:image" content="http://hellodon.github.io/2016/03/17/image-blur-effect/2.JPG">
+<meta property="og:image" content="http://hellodon.github.io/2016/03/17/image-blur-effect/3.JPG">
+<meta property="og:image" content="http://hellodon.github.io/2016/03/17/image-blur-effect/4.JPG">
+<meta property="og:updated_time" content="2016-04-08T07:22:12.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="图片毛玻璃效果实现">
 <meta name="twitter:description" content="听歌的时候发现网易云音乐和虾米音乐的播放界面都有那种图片的毛玻璃效果,看着非常高大上,决定研究一下是怎么实现的,百度了一下毛玻璃效果,张鑫旭大神的博客就出现了,这里主要是记录一下博客中的关键点，以便以后自己可以查看。
@@ -28,6 +32,7 @@ css+svg实现&amp;lt;!DOCTYPE html&amp;gt;
 &amp;lt;html&amp;gt;
 &amp;lt;head&amp;gt;
 &amp;lt;meta charset=&amp;quot;utf-8&amp;quot;">
+<meta name="twitter:image" content="http://hellodon.github.io/2016/03/17/image-blur-effect/1.JPG">
   
   
     <link rel="icon" href="/favicon.png">
@@ -139,13 +144,236 @@ css+svg实现&amp;lt;!DOCTYPE html&amp;gt;
     &lt;/div&gt;
 &lt;/body&gt;
 &lt;/html&gt;
-</code></pre><p>效果如下：<br><br></p>
+</code></pre><p>blur.svg    </p>
+<pre><code>&lt;svg version=&quot;1.1&quot; 
+     xmlns=&quot;http://www.w3.org/2000/svg&quot;
+     xmlns:xlink=&quot;http://www.w3.org/1999/xlink&quot;
+     xmlns:ev=&quot;http://www.w3.org/2001/xml-events&quot;     
+     baseProfile=&quot;full&quot;
+     style=&quot;display:none&quot;&gt;     
+    &lt;defs&gt;
+        &lt;filter id=&quot;blur&quot;&gt;
+            &lt;feGaussianBlur stdDeviation=&quot;10&quot; /&gt;
+        &lt;/filter&gt;
+    &lt;/defs&gt;
+&lt;/svg&gt;
+&lt;div class=&quot;wrp&quot;&gt;
+    &lt;svg width=&quot;300px&quot; height=&quot;300px&quot;&gt;
+        &lt;image xlink:href=&quot;1.jpg&quot; src=&quot;1.jpg&quot; x=&quot;0&quot; y=&quot;0&quot; width=&quot;300px&quot; height=&quot;300px&quot; filter=&quot;url(#blur)&quot;&gt;&lt;/image&gt;
+    &lt;/svg&gt;
+&lt;/div&gt;
+</code></pre><p>效果如下：<br><img src="/2016/03/17/image-blur-effect/1.JPG" class="xxx" width="150" title="[title text [alt text]]"></p>
+<p>低版本的firefox是不支持filter:blur方式的但是支持使用url传入svg的方式实现模糊效果,另外filter是也可以用在背景图上的。</p>
+<h2 id="canvas实现"><a href="#canvas实现" class="headerlink" title="canvas实现"></a>canvas实现</h2><p>大家仔细看会发现用css的实现的模糊效果边缘模糊处理的特别差,网上查了一下发现可以你用overflow：hidden处理,但是效果还是不好.</p>
+<p>这里我们用到了<a href="http://www.quasimondo.com/StackBlurForCanvas/StackBlur.js" target="_blank" rel="external">StackBlur.js</a> 用法非常简单 <a href="http://www.quasimondo.com/StackBlurForCanvas/StackBlurDemo.html" target="_blank" rel="external">Demo看这里</a>,我看了一下虾米音乐也是用了这个JS.</p>
+<p>代码如下:</p>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge,chrome=1&quot;&gt;
+&lt;title&gt;Examples&lt;/title&gt;
+&lt;meta name=&quot;description&quot; content=&quot;&quot;&gt;
+&lt;meta name=&quot;keywords&quot; content=&quot;&quot;&gt;
+&lt;link href=&quot;&quot; rel=&quot;stylesheet&quot;&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+    &lt;canvas id=&quot;myCanvas&quot;&gt;
+        Your browser does not support the HTML5 canvas tag.
+    &lt;/canvas&gt;
+
+&lt;script src=&quot;StackBlur.js&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot;&gt;
+    var c = document.getElementById(&#39;myCanvas&#39;);
+    var ctx = c.getContext(&#39;2d&#39;);
+    var image = new Image();
+
+    image.onload = function(){
+        /**
+         * stackBlurImage( imageID, canvasID, radius, blurAlphaChannel,w,h )
+         * imageID:表示要模糊的图片的id, 默认这个图片要隐藏
+         * canvasID:表示要显示模糊图片的canvas元素的id;
+         * radius: 表示模糊的半径大小.
+         * blurAlphaChannel:表示aplha透明通道是否要模糊，true表示要模糊(?)
+         * w,h:这两个参数是我自己加的,用来设置canvas的宽高
+         * (因为stackBlur源码里面是根据你传的图片的原始宽高naturalWidth来设计canvas的宽高的,这样子扩展性就差了,所以我做了修改)
+         */
+        stackBlurImage(&#39;s_img&#39;,&#39;myCanvas&#39;,30,false,300,200);
+    }
+
+    image.src = &#39;1.jpg&#39;;
+    image.id = &#39;s_img&#39;;
+    image.style.display = &#39;none&#39;;
+
+    document.getElementsByTagName(&quot;body&quot;)[0].appendChild(image);
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre><p>效果如下：<br><img src="/2016/03/17/image-blur-effect/2.JPG" class="xxx" width="150" title="[title text [alt text]]"></p>
+<p>这个的边缘模糊效果就非常棒了！</p>
+<p>现在我们就可以来实现虾米音乐的布局效果了。直接上代码:</p>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge,chrome=1&quot;&gt;
+&lt;title&gt;Examples&lt;/title&gt;
+&lt;meta name=&quot;description&quot; content=&quot;&quot;&gt;
+&lt;meta name=&quot;keywords&quot; content=&quot;&quot;&gt;
+&lt;link href=&quot;&quot; rel=&quot;stylesheet&quot;&gt;
+&lt;style type=&quot;text/css&quot;&gt;
+    *{
+        padding: 0px;
+        margin: 0px;
+    }
+    body,html{
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+    .content{
+        position: absolute;
+        top: 50px;
+        bottom: 50px;
+        background: #fff;
+        width: 100%;
+    }
+    canvas{
+        -webkit-transition: all 2s;
+        opacity: 0;
+    }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+    &lt;canvas id=&quot;myCanvas&quot;&gt;
+        Your browser does not support the HTML5 canvas tag.
+    &lt;/canvas&gt;
+
+    &lt;div class=&quot;content&quot;&gt;
+
+    &lt;/div&gt;
+
+&lt;script src=&quot;StackBlur.js&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot;&gt;
+    var width = window.screen.width;
+    var height = window.screen.height;
+    var c = document.getElementById(&#39;myCanvas&#39;);
+
+    //c.setAttribute(&#39;width&#39;,width); 
+    //c.setAttribute(&#39;height&#39;,height);
+
+    var ctx = c.getContext(&#39;2d&#39;);
+    var image = new Image();
+
+    image.onload = function(){
+        /**
+         * stackBlurImage( imageID, canvasID, radius, blurAlphaChannel,w,h )
+         * imageID:表示要模糊的图片的id, 默认这个图片要隐藏
+         * canvasID:表示要显示模糊图片的canvas元素的id;
+         * radius: 表示模糊的半径大小.
+         * blurAlphaChannel:表示aplha透明通道是否要模糊，true表示要模糊(?)
+         * w,h:这两个参数是我自己加的,用来设置canvas的宽高
+         * (因为stackBlur源码里面是根据你传的图片的原始宽高naturalWidth来设计canvas的宽高的,这样子扩展性就差了,所以我做了小的修改)
+         */
+        c.style.opacity = 1;
+        stackBlurImage(&#39;s_img&#39;,&#39;myCanvas&#39;,30,false,width,height);
+    }
+
+    image.src = &#39;1.jpg&#39;;
+    image.id = &#39;s_img&#39;;
+    image.style.display = &#39;none&#39;;
+
+    document.getElementsByTagName(&quot;body&quot;)[0].appendChild(image);
+
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre><p>效果如下：<br><img src="/2016/03/17/image-blur-effect/3.JPG" class="xxx" width="150" title="[title text [alt text]]"></p>
+<p>代码很简单,其实就是画了一个全屏的canvas,然后中间的内容div盖在canvas上面。</p>
+<p>接下来实现一个图片+介绍文字的效果,代码如下：</p>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge,chrome=1&quot;&gt;
+&lt;title&gt;Examples&lt;/title&gt;
+&lt;meta name=&quot;description&quot; content=&quot;&quot;&gt;
+&lt;meta name=&quot;keywords&quot; content=&quot;&quot;&gt;
+&lt;link href=&quot;&quot; rel=&quot;stylesheet&quot;&gt;
+&lt;style type=&quot;text/css&quot;&gt;
+    *{
+        padding: 0px;
+        margin: 0px;
+    }
+    body,html{
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+    .list-item{
+        position: relative;
+        width: 660px;
+        margin: 40px auto;
+    }
+    .cover{
+        position: absolute;
+        bottom: 0px;
+        height: 40px;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .desc{
+        position: absolute;
+        width: 100%;
+        color: #fff;
+        font-size: 16px;
+        line-height: 40px;
+        font-weight: bold;
+        text-indent: 10px;
+
+        background-color: rgba(0,0,0,.2);
+    }
+
+    .blur{
+        position: absolute;
+        bottom: 0px;
+
+        filter: blur(6px);
+        -webkit-filter: blur(6px);
+        -moz-filter: blur(6px);
+        -ms-filter: blur(6px);    
+
+        filter: progid:DXImageTransform.Microsoft.Blur(PixelRadius=5, MakeShadow=false);
+    }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+    &lt;div class=&quot;list-item&quot;&gt;
+        &lt;img src=&quot;1.jpg&quot; /&gt;
+        &lt;div class=&quot;cover&quot;&gt;
+            &lt;img src=&quot;1.jpg&quot; class=&quot;blur&quot;&gt;
+            &lt;div class=&quot;desc&quot;&gt;lonely dog&lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+&lt;script src=&quot;StackBlur.js&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot;&gt;
+
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre><p>效果：<br><img src="/2016/03/17/image-blur-effect/4.JPG" class="xxx" width="350" title="[title text [alt text]]"></p>
+<p>这个还是很实用的,很多地方应该都可以用到,比直接用介绍文字背景透明高大上很多,实现也很简单,大家看代码吧！！</p>
 
       
     </div>
     <footer class="article-footer">
       
-        <a data-url="http://hellodon.github.io/2016/03/17/image-blur-effect/" data-id="cim378gsc00022cz2q4es7j7w" class="article-share-link" data-share="baidu">分享到</a>
+        <a data-url="http://hellodon.github.io/2016/03/17/image-blur-effect/" data-id="cimre03y60000loz2inm8pwno" class="article-share-link" data-share="baidu">分享到</a>
       
 
       
@@ -159,25 +387,6 @@ css+svg实现&amp;lt;!DOCTYPE html&amp;gt;
   </div>
   
     
-<nav id="article-nav">
-  
-    <a href="/2016/03/22/heddd/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">下一篇</strong>
-      <div class="article-nav-title">
-        
-          heddd
-        
-      </div>
-    </a>
-  
-  
-    <a href="/2016/03/15/Hello-World/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">上一篇</strong>
-      <div class="article-nav-title">Hello World</div>
-    </a>
-  
-</nav>
-
   
 </article>
 
@@ -213,7 +422,7 @@ css+svg实现&amp;lt;!DOCTYPE html&amp;gt;
   <div class="widget-wrap">
     <h3 class="widget-title">归档</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">3</span></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -225,15 +434,7 @@ css+svg实现&amp;lt;!DOCTYPE html&amp;gt;
       <ul>
         
           <li>
-            <a href="/2016/03/22/heddd/">heddd</a>
-          </li>
-        
-          <li>
             <a href="/2016/03/17/image-blur-effect/">图片毛玻璃效果实现</a>
-          </li>
-        
-          <li>
-            <a href="/2016/03/15/Hello-World/">Hello World</a>
           </li>
         
       </ul>

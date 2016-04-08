@@ -1462,6 +1462,13 @@ pre .javascript .function {
   font-size: 28px;
   line-height: 28px;
 }
+.article-entry img,
+.article-entry video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin-left: 0px;
+}
 @media screen and (min-width: 768px) {
   #sidebar {
     display: inline;
